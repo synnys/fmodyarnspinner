@@ -88,9 +88,10 @@ Use commands inside Yarn scripts:
 // Play an FMOD event manually
 <<PlayFmodEvent "event:/EN_MALE1">>
 
-// Adjust FMOD parameters
-<<SetFmodParameter "event:/EN_MALE1" "Reverb" 0.5>>
+// Adjust GLOBAL FMOD parameters
+<<SetGlobalParameter "tension" 1.0>>
 
+(make sure your fmod parameters are set to global, if you're unsure, right click the parameter in FMOD, click edit parameter, and set it to global)
 6️⃣ FMOD Listener Follows Active Camera
 
 The FMODCameraListenerManager script ensures the correct FMOD Studio Listener is enabled based on the active Cinemachine Virtual Camera.
