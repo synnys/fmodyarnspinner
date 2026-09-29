@@ -1,150 +1,160 @@
-🎭 FMOD & Yarn Spinner Integration for Unity
+# FMOD & Yarn Spinner Integration for Unity
 
-This repository provides a fully integrated FMOD & Yarn Spinner system for interactive dialogues with dynamic audio in Unity.
-It supports multi-language voiceovers, FMOD event triggering, and camera-based audio listeners for a more immersive experience.
+Connect Yarn Spinner dialogue lines to FMOD voice-over events, with English and alternative-language audio mappings.
 
-🚀 Features
+This package is designed for **Yarn Spinner 3**. The setup below keeps the dialogue audio components on your existing **Dialogue System** GameObject.
 
-FMOD Event Mapping to Yarn Lines
+## Features
 
-Assign English (EN) and Alternative (ALT) FMOD events to Yarn dialogue lines.
+- Assign FMOD voice-over events to individual Yarn dialogue lines.
+- See the dialogue text in each mapping's **Description** field.
+- Assign separate English (`EN`) and alternative-language (`ALT`) events.
+- Wait for voice-over playback to finish, with support for advancing past a line.
+- Trigger additional FMOD events and change global parameters using Yarn commands.
+- Optionally switch voice-over languages with a UI button.
 
-Automatically extracts Line IDs from Yarn scripts.
+## Requirements
 
-Dialogue-Driven FMOD Sound Triggering
+- Unity with Yarn Spinner 3 installed. The updated presenter targets the API used by Yarn Spinner **3.2.8**.
+- FMOD for Unity, configured for your FMOD Studio project.
+- A working Yarn Project and Dialogue System.
+- FMOD voice-over events assigned to banks that are built and available to Unity at runtime.
 
-Play FMOD events from Yarn scripts.
+The updated `FMODDialogueView` uses `DialoguePresenterBase` and is not compatible with Yarn Spinner 2's `DialogueViewBase` API.
 
-Adjust FMOD parameters directly from Yarn commands.
+## 1. Import the package
 
-Multi-Language Support
+1. Download `FMODYarnSpinner.unitypackage` from this repository.
+2. In Unity, select **Assets → Import Package → Custom Package…**.
+3. Select the downloaded package and import its contents.
+4. Let Unity finish compiling and resolve any Console errors before continuing.
 
-Toggle between English & an alternative language with a UI button.
+## 2. Add line tags to your Yarn scripts
 
-Each Yarn line can have a separate FMOD event for each language.
+Every dialogue line that needs a voice-over must have a unique line tag.
 
-FMOD Camera-Based Listeners
+1. In the **Project** window, select your **Yarn Project** asset, such as `MyStoryProject`.
+2. In its Inspector, click **Add Line Tags to Yarn Scripts**.
 
-Integrates with Cinemachine virtual cameras.
+Your dialogue lines will have tags like this:
 
-Ensures audio perception follows active cameras.
+```yarn
+Player: I need to get off this island. #line:0d19f8a
+```
 
-Fully Modular Setup
+Keep these IDs once you assign audio. They connect the dialogue lines to their FMOD events.
 
-Drag-and-drop Yarn scripts into the Inspector.
+## 3. Add the components to Dialogue System
 
-Automatically populates Line IDs for easy FMOD event assignment.
+Select your existing **Dialogue System** GameObject in the Hierarchy. Add these components using **Add Component**:
 
-📦 Installation & Setup
+| Component | Required? | Purpose |
+| --- | --- | --- |
+| `FMODLineProvider` | Yes | Maps Yarn line IDs to FMOD voice-over events. |
+| `FMODDialogueView` | Yes | Plays the mapped audio when Yarn presents a line. |
+| `FMODLanguageToggle` | Optional | Connects a UI button to EN/ALT audio switching. |
+| `YarnFmodTrigger` | Optional | Registers Yarn commands for FMOD events and global parameters. |
 
-1️⃣ Import the Package
+You do not need separate FMOD Manager or FMOD Dialogue View GameObjects for this setup.
 
-Clone this repository or download the Unity package.
+## 4. Populate the line mappings
 
-Import it into your Unity project.
+On the **FMOD Line Provider** component:
 
-Ensure FMOD Unity Integration and Yarn Spinner are installed.
+1. Drag your `.yarn` script, such as `MyStoryScript`, into **Yarn Script**. Use the script, not the Yarn Project asset.
+2. Open the component's **⋮ menu** in its top-right corner.
+3. Select **Update Lines**.
+4. Expand **Line Event Mappings**.
 
-2️⃣ Set Up the Dialogue System
+Each entry contains:
 
-Attach Scripts to the Dialogue Runner
+| Field | What it contains |
+| --- | --- |
+| **Line ID** | The Yarn line tag, such as `line:0d19f8a`. |
+| **Description** | The dialogue text, including the speaker when present, without trailing tags. |
+| **Fmod Event EN** | The English voice-over event. |
+| **Fmod Event ALT** | The alternative-language voice-over event. |
 
-To centralize all functionality, attach these scripts to the Yarn Spinner Dialogue Runner:
+The foldout heading may still display the line ID. Expand the entry to read its **Description**.
 
-FMODLineProvider.cs
+> **Add Line Tags** and **Update Lines** do different jobs: Yarn adds IDs to your script; Update Lines reads those IDs into the FMOD component. Update Lines does not create tags or change the Yarn file. There is no separate Validate button.
 
-FMODDialogueView.cs
+The current provider accepts **one Yarn script**.
 
-YarnFMODTrigger.cs
+## 5. Assign the voice-over events
 
-FMODLanguageToggle.cs
+For each line you want voiced:
 
-FMODCameraListenerManager.cs (Attach to AudioManager GameObject)
+1. Read its **Description**.
+2. Use the FMOD event picker to assign the matching event to **Fmod Event EN**.
+3. If using a second language, assign the matching event to **Fmod Event ALT**.
 
-3️⃣ Configure FMOD Event Assignments
+For example:
 
-Add the FMODLineProvider component to the Dialogue Runner.
+```text
+Line ID:       line:0d19f8a
+Description:   Player: I need to get off this island.
+Fmod Event EN: event:/VO/Player/ineedofftheisland
+Fmod Event ALT: [your alternative-language event]
+```
 
-Drag your Yarn script(s) into the Inspector under Yarn Script.
+Audio defaults to **EN**. An empty event for the selected language produces no voice-over; the script does not automatically fall back to the other language.
 
-Click Update Lines to extract Line IDs.
+When adding or editing dialogue later:
 
-Assign FMOD Events for English & ALT languages.
+1. Save your Yarn script.
+2. Use **Add Line Tags to Yarn Scripts** for new, untagged lines.
+3. Run **Update Lines** again outside Play mode.
+4. Assign events for the new lines and save your scene.
 
-Toggle between EN/ALT using the UI button.
+Update Lines refreshes descriptions and preserves existing audio assignments for unchanged line IDs.
 
-4️⃣ Enable FMOD Audio for Dialogue Lines
+## 6. Connect FMOD Dialogue View to its provider
 
-The FMODDialogueView script automatically plays FMOD events assigned to Yarn dialogue lines.
+On the **FMOD Dialogue View** component:
 
-Uses the current selected language (EN or ALT).
+1. Find **Fmod Line Provider**.
+2. Drag the **FMOD Line Provider component header** from the same GameObject into that field.
 
-Plays the event when the corresponding Yarn line is reached.
+The reference should display:
 
-5️⃣ Trigger FMOD Events & Parameters from Yarn Scripts
+```text
+Dialogue System (FMOD Line Provider)
+```
 
-Use commands inside Yarn scripts:
+## 7. Register the FMOD dialogue presenter
 
-// Play an FMOD event manually
-<<PlayFmodEvent "event:/EN_MALE1">>
+**This step is essential. Adding the component to the GameObject alone does not make Yarn use it.**
 
-// Adjust GLOBAL FMOD parameters
-<<SetGlobalParameter "tension" 1.0>>
+On the **Dialogue Runner** component:
 
-(make sure your fmod parameters are set to global, if you're unsure, right click the parameter in FMOD, click edit parameter, and set it to global)
-6️⃣ FMOD Listener Follows Active Camera
+1. Expand **Dialogue Presenters**.
+2. Click **+** to add an entry.
+3. Drag the **FMOD Dialogue View component header** into the new slot.
+4. Keep your existing presenters.
 
-The FMODCameraListenerManager script ensures the correct FMOD Studio Listener is enabled based on the active Cinemachine Virtual Camera.
+With Yarn's standard Dialogue System, the list should look like this:
 
-Attach FMOD Studio Listeners to Cinemachine cameras.
+```text
+Element 0: Line Presenter
+Element 1: Options Presenter
+Element 2: Line Advancer
+Element 3: Dialogue System (FMOD Dialogue View)
+```
 
-Assign camera-listener pairs in the FMODCameraListenerManager.
+> Do not put `FMODLineProvider` in the Dialogue Runner's separate **Line Provider** field. That field is for Yarn's text/localisation provider. If you use Yarn's default setup, it can remain empty so Yarn creates its built-in localised line provider at runtime.
 
-🎮 Usage Guide
+## 8. Add a language button — optional
 
-🔀 Switching Languages at Runtime
+1. Create a UI **Button** with a TextMeshPro label.
+2. On **FMOD Language Toggle**, assign:
+   - **Line Provider:** the FMOD Line Provider on Dialogue System.
+   - **Toggle Button:** your UI Button component.
+   - **Button Text:** the button's TextMeshProUGUI label.
+3. Assign EN and ALT voice-over events for the lines you want voiced.
 
-A UI button toggles between English & Alternative language voiceovers.
+The script registers the button click automatically. Do not also add `ToggleLanguage` to the Button's **On Click** list, as this would toggle twice.
 
-Assigned via FMODLanguageToggle.cs.
+Switching language affects subsequent voice-over playback. It does not replace audio already playing or change Yarn's subtitle language. Configure text localisation separately in Yarn Spinner.
 
-Dynamically updates the played FMOD event based on the selected language.
-
-The Yarn text remains in English (subtitles) while audio changes.
-
-📜 Using Multiple Yarn Scripts (Per NPC)
-
-For projects with multiple NPCs, use separate Yarn scripts per character.
-
-Add multiple Yarn scripts to the FMODLineProvider.
-
-Assign FMOD events separately for each NPC’s lines.
-
-The system automatically detects and plays the correct voiceover.
-
-🛠 Debugging & Logging
-
-✅ Check the Console Logs
-
-Successful mapping: ✅ Mapped Yarn Line: line:xxxxxx → FMOD Event
-
-Missing FMOD event: ⚠️ No FMOD event assigned for Yarn Line ID
-
-Event playing: 🔊 Playing FMOD Event: event:/EN_MALE1
-
-🎯 Future Improvements
-
-🔹 More granular control over audio mixing (reverb, spatial effects)
-🔹 Multiple alternative languages support
-🔹 Live Yarn script reloading without restarting Unity
-
-📝 Credits
-
-Developed for interactive storytelling in Unity, integrating FMOD for immersive audio.
-Built using Yarn Spinner to create dynamic and engaging dialogue-driven experiences.
-
-⚡ License
-
-This project is licensed under the MIT License. Feel free to modify and expand upon it!
-
-🎵🎭 Happy game developing! 🚀
+For English-only audio, leave out or disable **FMOD Language Toggle**.
